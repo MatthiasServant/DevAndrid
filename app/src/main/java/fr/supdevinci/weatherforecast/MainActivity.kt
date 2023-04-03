@@ -71,23 +71,17 @@ class MainActivity : AppCompatActivity(){
                     val scope = CoroutineScope(Dispatchers.Main)
                     scope.launch {
                         weather = weatherViewModel.getWeather(lat!!, long!!)
-                        dailyWeather = weatherViewModel.getDailyWeather(lat!!, long!!)
+                        dailyWeather = weatherViewModel.getDailyWeather(lat, long)
                         println(dailyWeather)
                         setData(weather)
                         setDailyWeather(dailyWeather)
                         city.setText(query)
                     }
                 }
-                // Gérez l'action soumise ici
-                // Par exemple, vous pouvez effectuer une requête à votre API
-                // en utilisant la chaîne de requête `query` comme paramètre
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                // Gérez les changements de texte ici
-                // Par exemple, vous pouvez effectuer des suggestions de recherche
-                // en utilisant la chaîne de requête `newText` comme paramètre
                 return true
             }
         })
@@ -114,6 +108,12 @@ class MainActivity : AppCompatActivity(){
         weatherCode.setText(weather?.getActualWeather())
         val weatherIcon : ImageView = findViewById(R.id.weatherIcon)
         weatherIcon.setBackgroundResource(weather?.getWeatherIcon()!!)
+        val humidity : TextView = findViewById(R.id.humidity)
+        humidity.setText(weather.getHumidity())
+        val wind : TextView = findViewById(R.id.windSpeed)
+        wind.setText(weather.getWindSpeed())
+        val uvIndex : TextView = findViewById(R.id.UVIndex)
+        uvIndex.setText(weather.getUVIndex())
     }
 
     fun setDailyWeather(dailyWeather: List<DailyWeatherModel>?){

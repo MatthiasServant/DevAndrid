@@ -12,7 +12,8 @@ data class Weather(
     val latitude: Float = 0F,
     val longitude: Float = 0F,
     val elevation: Float = 0F,
-    val hourly: Hourly?
+    val hourly: Hourly?,
+    val daily: Daily?
     ){
 
     fun getDateToString() : String{
@@ -57,8 +58,6 @@ data class Weather(
                 weatherCode = (this.hourly?.weathercode?.get(i) ?: 0)
             }
         }
-        println("TEST DUDUDDDDDDDDDDDDDDDDDDD ${getWeatherDescription(weatherCode).second}")
-        println("TEST DUDUDDDDDDDDDDDDDDDDDDD ${weatherCode}")
 
         return getWeatherDescription(weatherCode).second
     }
@@ -130,5 +129,12 @@ data class Hourly(
     val weathercode: List<Int>?,
     @SerializedName("uv_index")
     val UVIndex: List<Int>?
+)
+
+data class Daily(
+    val time: List<String>,
+    val weathercode: List<Int>,
+    @SerializedName("temperature_2m_max")
+    val temperature: List<Float>
 )
 

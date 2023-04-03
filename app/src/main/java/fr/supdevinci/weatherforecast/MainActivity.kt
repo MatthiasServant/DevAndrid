@@ -5,13 +5,18 @@ import android.graphics.drawable.Drawable
 import android.location.Geocoder
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.ImageView
-import android.widget.TextView
+import android.view.View
+import android.widget.*
+import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import fr.supdevinci.weatherforecast.Database.CityRoomDatabase
 import fr.supdevinci.weatherforecast.Entity.WeatherCityEntity
+import fr.supdevinci.weatherforecast.Model.DailyWeatherModel
 import fr.supdevinci.weatherforecast.Model.Weather
 import fr.supdevinci.weatherforecast.Repository.WeatherRepository
+import fr.supdevinci.weatherforecast.View.WeatherAdapter
 import fr.supdevinci.weatherforecast.ViewModel.CoordinatesViewModel
 import fr.supdevinci.weatherforecast.ViewModel.WeatherViewModel
 import fr.supdevinci.weatherforecast.databinding.ActivityMainBinding
@@ -20,6 +25,9 @@ import kotlinx.coroutines.*
 class MainActivity : AppCompatActivity(){
     private lateinit var weatherViewModel: WeatherViewModel
     private var weather : Weather? = null
+    private var dailyWeather : MutableList<DailyWeatherModel>? = null
+    private val layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+    private lateinit var loadingLayout: FrameLayout
 
     private lateinit var binding: ActivityMainBinding
 
@@ -50,12 +58,50 @@ class MainActivity : AppCompatActivity(){
             repository.insert(WeatherCityEntity("World!"))
         }
 
-        // Get weather from weatherViewModel
+        val searchView = findViewById<SearchView>(R.id.search_view)
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+
+                if (query != null) {
+                    val address = geocoder.getFromLocationName(query, 1)?.get(0)
+                    val lat = address?.latitude
+                    val long = address?.longitude
+
+                    val scope = CoroutineScope(Dispatchers.Main)
+                    scope.launch {
+                        weather = weatherViewModel.getWeather(lat!!, long!!)
+                        dailyWeather = weatherViewModel.getDailyWeather(lat!!, long!!)
+                        println(dailyWeather)
+                        setData(weather)
+                        setDailyWeather(dailyWeather)
+                        city.setText(query)
+                    }
+                }
+                // Gérez l'action soumise ici
+                // Par exemple, vous pouvez effectuer une requête à votre API
+                // en utilisant la chaîne de requête `query` comme paramètre
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // Gérez les changements de texte ici
+                // Par exemple, vous pouvez effectuer des suggestions de recherche
+                // en utilisant la chaîne de requête `newText` comme paramètre
+                return true
+            }
+        })
+
+            // Get weather from weatherViewModel
         val scope = CoroutineScope(Dispatchers.Main)
         scope.launch {
             weather = weatherViewModel.getWeather(latitude, longitude)
+            dailyWeather = weatherViewModel.getDailyWeather(latitude, longitude)
             setData(weather)
+            setDailyWeather(dailyWeather)
         }
+
+
     }
 
     fun setData(weather: Weather?){
@@ -68,12 +114,23 @@ class MainActivity : AppCompatActivity(){
         weatherCode.setText(weather?.getActualWeather())
         val weatherIcon : ImageView = findViewById(R.id.weatherIcon)
         weatherIcon.setBackgroundResource(weather?.getWeatherIcon()!!)
-
-        /*val humidity : TextView = findViewById(R.id.humidity)
-        humidity.setText(weather?.getHumidity())
-        val wind : TextView = findViewById(R.id.windSpeed)
-        wind.setText(weather?.getWindSpeed())
-        val UVIndex : TextView = findViewById(R.id.UVIndex)
-        UVIndex.setText(weather?.getUVIndex())*/
     }
+
+    fun setDailyWeather(dailyWeather: List<DailyWeatherModel>?){
+        val adapter = dailyWeather?.let { WeatherAdapter(it) }
+        val recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
+        println(adapter)
+
+        recyclerView.layoutManager = layoutManager
+        recyclerView.setHasFixedSize(true)
+        recyclerView.adapter = adapter
+
+        hideLoadingScreen()
+    }
+
+    private fun hideLoadingScreen() {
+        loadingLayout = findViewById(R.id.loadingLayout)
+        loadingLayout.visibility = View.GONE
+    }
+
 }
